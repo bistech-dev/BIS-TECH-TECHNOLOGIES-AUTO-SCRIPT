@@ -48,11 +48,22 @@ supported.)
 
 ## Installation
 
+**One-line install (recommended):**
+
 ```bash
-git clone https://github.com/YOUR_USERNAME/BIS-TECH-AUTO-SCRIPT.git
+bash <(curl -Ls https://raw.githubusercontent.com/bistech-dev/BIS-TECH-AUTO-SCRIPT/main/install.sh)
+```
+
+**Or, clone and install manually:**
+
+```bash
+git clone https://github.com/bistech-dev/BIS-TECH-AUTO-SCRIPT.git
 cd BIS-TECH-AUTO-SCRIPT
 sudo bash install.sh
 ```
+
+Both methods do the same thing — the one-liner just downloads the
+project automatically first.
 
 Once installed, launch the tool anytime with:
 
@@ -108,7 +119,7 @@ point the update system at your own fork:
 SCRIPT_NAME="BIS-TECH AUTO SCRIPT"
 SCRIPT_VERSION="1.0.0"
 AUTHOR="BIS-TECH TECHNOLOGIES"
-GITHUB_REPO="YOUR_USERNAME/BIS-TECH-AUTO-SCRIPT"
+GITHUB_REPO="bistech-dev/BIS-TECH-AUTO-SCRIPT"
 ```
 
 ---

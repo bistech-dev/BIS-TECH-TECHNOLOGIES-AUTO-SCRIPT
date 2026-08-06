@@ -8,8 +8,35 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+GITHUB_USER_REPO="bistech-dev/BIS-TECH-AUTO-SCRIPT"
+GITHUB_BRANCH="main"
 INSTALL_DIR="/opt/bis-tech"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+
+# ---------- Standalone (curl | bash) support ----------
+# If this file is running on its own (e.g. via
+# bash <(curl -Ls https://raw.githubusercontent.com/.../install.sh))
+# the rest of the project (colors.sh, menu.sh, modules/) won't exist
+# locally yet. Detect that case and clone the full repo to a temp
+# directory first, then continue the install from there.
+if [ ! -f "$SCRIPT_DIR/colors.sh" ]; then
+    if ! command -v git >/dev/null 2>&1; then
+        echo "Installing git (required to download the project)..."
+        apt-get update -y >/dev/null 2>&1 || true
+        apt-get install -y git >/dev/null 2>&1
+    fi
+    echo "Downloading BIS-TECH AUTO SCRIPT from GitHub..."
+    TMP_CLONE_DIR="$(mktemp -d)"
+    if ! git clone --depth 1 --branch "$GITHUB_BRANCH" \
+        "https://github.com/${GITHUB_USER_REPO}.git" "$TMP_CLONE_DIR" 2>/dev/null; then
+        echo "ERROR: Failed to download the project from GitHub."
+        echo "Check your internet connection and that the repo/branch exist:"
+        echo "https://github.com/${GITHUB_USER_REPO}/tree/${GITHUB_BRANCH}"
+        exit 1
+    fi
+    SCRIPT_DIR="$TMP_CLONE_DIR"
+fi
 
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/colors.sh"
