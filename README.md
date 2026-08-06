@@ -147,6 +147,58 @@ clone of the repository.
 
 ---
 
+## Trial & Licensing
+
+BIS-TECH AUTO SCRIPT runs free for `TRIAL_DAYS` (7 by default, set in
+`config.conf`) from the moment it's first installed on a machine. The
+trial clock is stored outside `/opt/bis-tech` (at `/etc/.bistech_trial_start`
+by default) specifically so uninstalling and reinstalling does not
+reset it.
+
+Once the trial ends, the menu is blocked behind an activation screen.
+Customers activate with **[20] Activate License** (or the prompt shown
+automatically once the trial expires), entering the email they
+purchased with plus the license key you send them.
+
+**Issuing a license key — two ways:**
+
+1. **From your own machine (standalone, no trial/menu involved):**
+   ```bash
+   ./generate_license.sh customer@example.com
+   ```
+
+2. **From inside the running menu, on any server (admin-gated):**
+   Select option **21** at the main menu prompt (it's intentionally not
+   listed on screen — type `21` directly). You'll be asked for the
+   admin password before anything happens; enter the wrong one and it
+   just says "Access denied," no hint that a key was even attempted.
+   Every key issued this way is logged to
+   `/opt/bis-tech/issued_licenses.log` for your records.
+
+Both methods use `LICENSE_SECRET` from `config.conf` — **change that
+value to your own private secret before selling**, and never commit
+your real secret to a public repository.
+
+**Setting the admin password** (required before option 21 will work):
+```bash
+echo -n "YourChosenPassword" | sha256sum
+```
+Copy the resulting hash into `ADMIN_PASSWORD_HASH` in `config.conf`.
+The default value is a placeholder hash for the password `changeme` —
+**do not ship that default to customers.**
+
+Note this is an offline, client-side check with no revocation or
+per-machine binding — a reasonable trial gate and a reasonable admin
+speed bump, not hardened DRM. Since `generate_license_key` exists in
+every customer's copy of the code (just gated by a password only you
+know), it's a convenience feature for you, not a security boundary in
+itself — the real protection is keeping your admin password and
+`LICENSE_SECRET` private. If you need stronger enforcement (server-side
+validation, revocation, per-server locking) that's a further step up
+in complexity.
+
+---
+
 ## Uninstalling
 
 From the menu, choose **[19] Uninstall Script**, or run:

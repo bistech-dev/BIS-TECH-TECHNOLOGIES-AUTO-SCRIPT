@@ -107,6 +107,22 @@ info "Setting executable permissions..."
 chmod +x "$INSTALL_DIR"/*.sh
 chmod +x "$INSTALL_DIR"/modules/*.sh
 
+# ---------- Start the trial clock (only on first-ever install) ----------
+# Stored outside INSTALL_DIR so uninstalling/reinstalling the tool does
+# not reset the trial period. TRIAL_MARKER_FILE comes from config.conf.
+if [ -f "$INSTALL_DIR/config.conf" ]; then
+    # shellcheck source=/dev/null
+    source "$INSTALL_DIR/config.conf"
+fi
+TRIAL_MARKER_FILE="${TRIAL_MARKER_FILE:-/etc/.bistech_trial_start}"
+if [ ! -f "$TRIAL_MARKER_FILE" ]; then
+    date +%s > "$TRIAL_MARKER_FILE" 2>/dev/null
+    chmod 444 "$TRIAL_MARKER_FILE" 2>/dev/null
+    info "Trial period started (${TRIAL_DAYS:-30} days)."
+else
+    info "Existing trial/license record found - not resetting."
+fi
+
 # ---------- Create command shortcuts ----------
 info "Creating 'bis-tech' command shortcut..."
 cat > /usr/local/bin/bis-tech <<EOF

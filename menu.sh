@@ -25,6 +25,9 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# ---------- Trial / License gate ----------
+check_trial_or_license
+
 # =========================================================
 # Generic systemd service manager (used for SSH / SSH UDP /
 # ZIVPN / Xray sub-menus). Each of these tools is expected to
@@ -124,6 +127,7 @@ cat <<'EOF'
  ├─ [17] Check for Updates
  ├─ [18] About
  ├─ [19] Uninstall Script
+ ├─ [20] Activate License
 
  [0] Exit
 
@@ -151,6 +155,8 @@ EOF
             17) check_for_updates ;;
             18) show_about ;;
             19) uninstall_script ;;
+            20) activate_license ;;
+            21) generate_license_key ;;
             0)
                 echo -e "${GREEN}Goodbye!${RESET}"
                 exit 0
