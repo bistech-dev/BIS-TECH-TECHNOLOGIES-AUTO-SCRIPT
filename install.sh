@@ -107,7 +107,7 @@ info "Setting executable permissions..."
 chmod +x "$INSTALL_DIR"/*.sh
 chmod +x "$INSTALL_DIR"/modules/*.sh
 
-# ---------- Create command shortcut ----------
+# ---------- Create command shortcuts ----------
 info "Creating 'bis-tech' command shortcut..."
 cat > /usr/local/bin/bis-tech <<EOF
 #!/bin/bash
@@ -115,7 +115,40 @@ exec "$INSTALL_DIR/menu.sh" "\$@"
 EOF
 chmod +x /usr/local/bin/bis-tech
 
+info "Creating 'menu' command shortcut..."
+cat > /usr/local/bin/menu <<EOF
+#!/bin/bash
+if [ "\$EUID" -ne 0 ]; then
+    exec sudo "$INSTALL_DIR/menu.sh" "\$@"
+else
+    exec "$INSTALL_DIR/menu.sh" "\$@"
+fi
+EOF
+chmod +x /usr/local/bin/menu
+
+# ---------- Allow 'menu' to run without a password prompt ----------
+# Grants the user who invoked this installer (via sudo) passwordless
+# root access specifically to menu.sh, so 'menu' opens instantly with
+# no sudo/password step. Skipped when installing directly as the root
+# account (no separate sudo user to grant this to) or on shared systems
+# where this may not be desired.
+TARGET_USER="${SUDO_USER:-}"
+if [ -n "$TARGET_USER" ] && [ "$TARGET_USER" != "root" ]; then
+    info "Configuring passwordless access to 'menu' for user: $TARGET_USER"
+    SUDOERS_FILE="/etc/sudoers.d/bis-tech-menu"
+    echo "${TARGET_USER} ALL=(ALL) NOPASSWD: ${INSTALL_DIR}/menu.sh" > "$SUDOERS_FILE"
+    chmod 440 "$SUDOERS_FILE"
+    if visudo -cf "$SUDOERS_FILE" >/dev/null 2>&1; then
+        success "You can now just type 'menu' - no sudo or password needed."
+    else
+        rm -f "$SUDOERS_FILE"
+        warning "Could not safely configure passwordless access. Use 'sudo menu' instead."
+    fi
+else
+    info "Installed as root directly - run 'menu' or 'bis-tech' to launch."
+fi
+
 success "Installation complete!"
 line
-echo -e "${WHITE}Run the tool anytime with:${RESET} ${GREEN}sudo bis-tech${RESET}"
+echo -e "${WHITE}Run the tool anytime with:${RESET} ${GREEN}menu${RESET}"
 line

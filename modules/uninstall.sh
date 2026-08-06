@@ -10,7 +10,7 @@ uninstall_script() {
     echo -e "${WHITE} UNINSTALL SCRIPT${RESET}"
     line
 
-    warning "This will remove BIS-TECH AUTO SCRIPT and the 'bis-tech' command."
+    warning "This will remove BIS-TECH AUTO SCRIPT and the 'bis-tech'/'menu' commands."
     warning "Your backups in $BACKUP_DIR will NOT be touched unless you confirm below."
     read -rp "Are you sure you want to uninstall? (y/N): " confirm
 
@@ -21,8 +21,10 @@ uninstall_script() {
 
     read -rp "Also delete backups in $BACKUP_DIR? (y/N): " del_backups
 
-    info "Removing command shortcut..."
+    info "Removing command shortcuts..."
     rm -f /usr/local/bin/bis-tech
+    rm -f /usr/local/bin/menu
+    rm -f /etc/sudoers.d/bis-tech-menu
 
     if [[ "$del_backups" =~ ^[Yy]$ ]]; then
         info "Removing installation directory (including backups)..."

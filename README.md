@@ -68,8 +68,13 @@ project automatically first.
 Once installed, launch the tool anytime with:
 
 ```bash
-sudo bis-tech
+menu
 ```
+
+If you installed as a regular user via `sudo`, the installer configures
+passwordless access so `menu` opens instantly with no `sudo` or password
+prompt. If that step is skipped (e.g. you installed directly as `root`,
+or on a shared system), use `sudo bis-tech` instead.
 
 The installer will:
 
@@ -81,7 +86,10 @@ The installer will:
 4. Back up any existing installation at `/opt/bis-tech`.
 5. Copy the project into `/opt/bis-tech`.
 6. Set executable permissions on all scripts.
-7. Create the `bis-tech` command in `/usr/local/bin`.
+7. Create the `bis-tech` and `menu` commands in `/usr/local/bin`.
+8. Grant the installing user passwordless access to `menu` (via a
+   dedicated `/etc/sudoers.d/bis-tech-menu` rule), so `menu` alone is
+   enough to launch the tool with full root privileges.
 
 ---
 
