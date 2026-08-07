@@ -159,20 +159,42 @@ install_zivpn_service() {
     _install_from_configured_url "ZIVPN" "$ZIVPN_INSTALL_URL"
 }
 
-ssh_manager() {
-    generic_service_manager "SSH MANAGER" "ssh" "install_ssh_service"
-}
+# =========================================================
+# Unified Service Manager hub - one screen for all four
+# protocol services (SSH, SSH UDP, ZIVPN, Xray) instead of
+# four separate top-level menu entries. Pick a service, act on
+# it, and land back on this same hub - no more jumping between
+# differently-labeled menus for each protocol.
+# =========================================================
+service_manager_hub() {
+    while true; do
+        banner
+        echo -e "${WHITE} SERVICE MANAGER${RESET}"
+        line
 
-ssh_udp_manager() {
-    generic_service_manager "SSH UDP SERVICE MANAGER" "sshudp" "install_sshudp_service"
-}
+        local ssh_state sshudp_state zivpn_state xray_state
+        ssh_state=$(systemctl is-active ssh 2>/dev/null || echo "not installed")
+        sshudp_state=$(systemctl is-active sshudp 2>/dev/null || echo "not installed")
+        zivpn_state=$(systemctl is-active zivpn 2>/dev/null || echo "not installed")
+        xray_state=$(systemctl is-active xray 2>/dev/null || echo "not installed")
 
-zivpn_manager() {
-    generic_service_manager "ZIVPN SERVICE MANAGER" "zivpn" "install_zivpn_service"
-}
+        echo -e " ${CYAN}[1]${RESET} SSH        - $ssh_state"
+        echo -e " ${CYAN}[2]${RESET} SSH UDP    - $sshudp_state"
+        echo -e " ${CYAN}[3]${RESET} ZIVPN      - $zivpn_state"
+        echo -e " ${CYAN}[4]${RESET} Xray       - $xray_state"
+        echo " [0] Back to Main Menu"
+        line
+        read -rp "Select a service to manage: " svc_pick
 
-xray_manager() {
-    generic_service_manager "XRAY MANAGER" "xray" "install_xray_service"
+        case $svc_pick in
+            1) generic_service_manager "SSH MANAGER" "ssh" "install_ssh_service" ;;
+            2) generic_service_manager "SSH UDP SERVICE MANAGER" "sshudp" "install_sshudp_service" ;;
+            3) generic_service_manager "ZIVPN SERVICE MANAGER" "zivpn" "install_zivpn_service" ;;
+            4) generic_service_manager "XRAY MANAGER" "xray" "install_xray_service" ;;
+            0) return 0 ;;
+            *) warning "Invalid option." ; read -rp "Press Enter to continue..." _ ;;
+        esac
+    done
 }
 
 # =========================================================
@@ -185,22 +207,21 @@ main_menu() {
         box_top
         box_line "${WHITE}MENU${RESET}" center
         box_divider
-        box_two_col "[1]  System Information"   "[6]  ZIVPN Manager"
-        box_two_col "[2]  System Monitor"        "[7]  Xray Manager"
-        box_two_col "[3]  VPS Speed Test"         "[8]  Firewall Manager"
-        box_two_col "[4]  SSH Manager"             "[9]  Create User"
-        box_two_col "[5]  SSH UDP Manager"          "[10] Create Trial Account"
+        box_two_col "[1] System Information"   "[5] Firewall Manager"
+        box_two_col "[2] System Monitor"        "[6] Create User"
+        box_two_col "[3] VPS Speed Test"         "[7] Create Trial Account"
+        box_two_col "[4] Service Manager"         "[8] Delete User"
         box_bottom
         echo
 
         box_top
         box_line "${WHITE}TOOLS${RESET}" center
         box_divider
-        box_two_col "[11] Delete User"            "[16] Enable BBR"
-        box_two_col "[12] List Users"               "[17] Check for Updates"
-        box_two_col "[13] Backup VPS"                 "[18] About"
-        box_two_col "[14] Restore VPS"                 "[19] Uninstall Script"
-        box_two_col "[15] Restart All Services"          "[20] Activate License"
+        box_two_col "[9]  List Users"            "[14] Check for Updates"
+        box_two_col "[10] Backup VPS"              "[15] About"
+        box_two_col "[11] Restore VPS"               "[16] Uninstall Script"
+        box_two_col "[12] Restart All Services"        "[17] Activate License"
+        box_two_col "[13] Enable BBR"                    ""
         box_bottom
         echo
 
@@ -212,24 +233,21 @@ main_menu() {
             1) system_info ;;
             2) system_monitor ;;
             3) vps_speedtest ;;
-            4) ssh_manager ;;
-            5) ssh_udp_manager ;;
-            6) zivpn_manager ;;
-            7) xray_manager ;;
-            8) firewall_manager ;;
-            9) create_user ;;
-            10) create_trial_user ;;
-            11) delete_user ;;
-            12) list_users ;;
-            13) backup_vps ;;
-            14) restore_vps ;;
-            15) restart_all_services ;;
-            16) enable_bbr ;;
-            17) check_for_updates ;;
-            18) show_about ;;
-            19) uninstall_script ;;
-            20) activate_license ;;
-            21) generate_license_key ;;
+            4) service_manager_hub ;;
+            5) firewall_manager ;;
+            6) create_user ;;
+            7) create_trial_user ;;
+            8) delete_user ;;
+            9) list_users ;;
+            10) backup_vps ;;
+            11) restore_vps ;;
+            12) restart_all_services ;;
+            13) enable_bbr ;;
+            14) check_for_updates ;;
+            15) show_about ;;
+            16) uninstall_script ;;
+            17) activate_license ;;
+            99) generate_license_key ;;
             0)
                 echo -e "${GREEN}Goodbye!${RESET}"
                 exit 0

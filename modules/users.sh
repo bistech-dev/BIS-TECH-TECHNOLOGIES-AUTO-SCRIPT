@@ -42,6 +42,7 @@ create_user() {
     fi
 
     success "User '$uname_input' created successfully."
+    provision_all_protocols "$uname_input"
     line
 }
 
@@ -70,6 +71,7 @@ create_trial_user() {
     echo -e "${CYAN}Username:${RESET} $trial_user"
     echo -e "${CYAN}Password:${RESET} $trial_pass"
     echo -e "${CYAN}Expires :${RESET} $expire_date"
+    provision_all_protocols "$trial_user"
     line
 }
 
