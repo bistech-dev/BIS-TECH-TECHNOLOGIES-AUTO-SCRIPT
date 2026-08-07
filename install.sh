@@ -8,7 +8,7 @@
 
 set -e
 
-GITHUB_USER_REPO="bistech-dev/BIS-TECH-AUTO-SCRIPT"
+GITHUB_USER_REPO="bistech-dev/BIS-TECH-TECHNOLOGIES-AUTO-SCRIPT"
 GITHUB_BRANCH="main"
 INSTALL_DIR="/opt/bis-tech"
 
