@@ -149,11 +149,13 @@ clone of the repository.
 
 ## Trial & Licensing
 
-BIS-TECH AUTO SCRIPT runs free for `TRIAL_DAYS` (7 by default, set in
-`config.conf`) from the moment it's first installed on a machine. The
-trial clock is stored outside `/opt/bis-tech` (at `/etc/.bistech_trial_start`
-by default) specifically so uninstalling and reinstalling does not
-reset it.
+BIS-TECH AUTO SCRIPT runs free for a configurable trial period, set in
+`config.conf` via `TRIAL_DURATION_VALUE` and `TRIAL_DURATION_UNIT`
+(default: `3` `days`). The unit can be `minutes`, `hours`, or `days` -
+minutes/hours are handy for quickly testing the expiry flow yourself
+before shipping to customers. The trial clock is stored outside
+`/opt/bis-tech` (at `/etc/.bistech_trial_start` by default)
+specifically so uninstalling and reinstalling does not reset it.
 
 Once the trial ends, the menu is blocked behind an activation screen.
 Customers activate with **[20] Activate License** (or the prompt shown

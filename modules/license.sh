@@ -9,8 +9,8 @@
 # - On first run, a trial start timestamp is written to TRIAL_MARKER_FILE
 #   (outside INSTALL_DIR, so uninstalling/reinstalling the script does
 #   NOT reset the trial).
-# - Each time the menu launches, we compare "today" against that start
-#   date. Inside TRIAL_DAYS, the tool runs normally with a reminder of
+# - Each time the menu launches, we compare "now" against that start
+#   time. Inside the configured trial duration, the tool runs normally
 #   days left. After that, it requires a valid license key.
 # - License keys are generated offline as:
 #     sha256("<LICENSE_SECRET>:<customer email>") truncated/uppercased
@@ -32,6 +32,63 @@
 _bistech_expected_key() {
     local email="$1"
     echo -n "${LICENSE_SECRET}:${email}" | sha256sum | cut -c1-16 | tr '[:lower:]' '[:upper:]'
+}
+
+# Convert TRIAL_DURATION_VALUE + TRIAL_DURATION_UNIT into total seconds
+_bistech_trial_seconds() {
+    local value="${TRIAL_DURATION_VALUE:-3}"
+    local unit="${TRIAL_DURATION_UNIT:-days}"
+    case "$unit" in
+        minute|minutes) echo $(( value * 60 )) ;;
+        hour|hours)     echo $(( value * 3600 )) ;;
+        day|days|*)     echo $(( value * 86400 )) ;;
+    esac
+}
+
+# Format a count of seconds as a human-readable duration, picking
+# whichever of days/hours/minutes fits best.
+_bistech_human_duration() {
+    local seconds="$1"
+    [ "$seconds" -lt 0 ] && seconds=0
+
+    if [ "$seconds" -ge 86400 ]; then
+        echo "$(( seconds / 86400 )) day(s)"
+    elif [ "$seconds" -ge 3600 ]; then
+        echo "$(( seconds / 3600 )) hour(s)"
+    elif [ "$seconds" -ge 60 ]; then
+        echo "$(( seconds / 60 )) minute(s)"
+    else
+        echo "less than a minute"
+    fi
+}
+
+# Read a password from stdin without echoing it, but show '*' per
+# keystroke so it's clear input is being registered (not frozen).
+# Feedback goes to stderr so this can still be used as
+# var=$(_bistech_read_masked "prompt") without asterisks leaking into
+# the captured value.
+_bistech_read_masked() {
+    local prompt="$1"
+    local input=""
+    local char
+
+    echo -n "$prompt" 1>&2
+    while IFS= read -r -s -n 1 char; do
+        if [ -z "$char" ]; then
+            break
+        fi
+        if [[ "$char" == $'\x7f' || "$char" == $'\b' ]]; then
+            if [ -n "$input" ]; then
+                input="${input%?}"
+                echo -ne '\b \b' 1>&2
+            fi
+        else
+            input+="$char"
+            echo -n '*' 1>&2
+        fi
+    done
+    echo 1>&2
+    printf '%s' "$input"
 }
 
 # Ensure a trial start timestamp exists; create it on first-ever run
@@ -111,8 +168,8 @@ generate_license_key() {
         return 1
     fi
 
-    read -rsp "Enter admin password: " admin_pass_input
-    echo
+    local admin_pass_input
+    admin_pass_input=$(_bistech_read_masked "Enter admin password: ")
     local admin_hash_input
     admin_hash_input=$(echo -n "$admin_pass_input" | sha256sum | cut -d' ' -f1)
 
@@ -154,20 +211,21 @@ check_trial_or_license() {
         return 0
     fi
 
-    local start_ts now_ts days_used days_left
+    local start_ts now_ts seconds_used trial_total_seconds seconds_left
     start_ts=$(cat "$TRIAL_MARKER_FILE" 2>/dev/null)
     now_ts=$(date +%s)
 
     if [ -z "$start_ts" ]; then
-        # Marker unreadable/missing for some reason - fail open to trial day 0
+        # Marker unreadable/missing for some reason - fail open to trial start
         start_ts=$now_ts
     fi
 
-    days_used=$(( (now_ts - start_ts) / 86400 ))
-    days_left=$(( TRIAL_DAYS - days_used ))
+    trial_total_seconds=$(_bistech_trial_seconds)
+    seconds_used=$(( now_ts - start_ts ))
+    seconds_left=$(( trial_total_seconds - seconds_used ))
 
-    if [ "$days_left" -gt 0 ]; then
-        warning "Trial mode: ${days_left} day(s) remaining. Choose [Activate License] anytime from the menu."
+    if [ "$seconds_left" -gt 0 ]; then
+        warning "Trial mode: $(_bistech_human_duration "$seconds_left") remaining. Choose [Activate License] anytime from the menu."
         line
         return 0
     fi
@@ -176,7 +234,7 @@ check_trial_or_license() {
     banner
     echo -e "${WHITE} TRIAL EXPIRED${RESET}"
     line
-    warning "Your ${TRIAL_DAYS}-day free trial has ended."
+    warning "Your ${TRIAL_DURATION_VALUE}-${TRIAL_DURATION_UNIT} free trial has ended."
     echo "Please activate a license to continue using BIS-TECH AUTO SCRIPT."
     line
 

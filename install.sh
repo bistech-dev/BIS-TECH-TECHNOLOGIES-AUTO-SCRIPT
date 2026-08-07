@@ -118,7 +118,7 @@ TRIAL_MARKER_FILE="${TRIAL_MARKER_FILE:-/etc/.bistech_trial_start}"
 if [ ! -f "$TRIAL_MARKER_FILE" ]; then
     date +%s > "$TRIAL_MARKER_FILE" 2>/dev/null
     chmod 444 "$TRIAL_MARKER_FILE" 2>/dev/null
-    info "Trial period started (${TRIAL_DAYS:-30} days)."
+    info "Trial period started (${TRIAL_DURATION_VALUE:-3} ${TRIAL_DURATION_UNIT:-days})."
 else
     info "Existing trial/license record found - not resetting."
 fi
