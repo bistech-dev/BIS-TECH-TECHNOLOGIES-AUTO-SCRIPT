@@ -148,3 +148,18 @@ restart_all_services() {
     line
     success "Service restart routine complete."
 }
+
+# Reboot the entire VPS - always confirm first, this drops the SSH session
+reboot_vps() {
+    banner
+    echo -e "${WHITE} REBOOT VPS${RESET}"
+    line
+    warning "This will reboot the entire server. Your SSH session will drop."
+    read -rp "Are you sure you want to reboot now? (y/N): " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        warning "Cancelled."
+        return 0
+    fi
+    info "Rebooting..."
+    reboot
+}

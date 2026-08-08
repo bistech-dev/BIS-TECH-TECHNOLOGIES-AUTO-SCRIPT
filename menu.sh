@@ -207,21 +207,31 @@ main_menu() {
         box_top
         box_line "${WHITE}MENU${RESET}" center
         box_divider
-        box_two_col "[1] System Information"   "[5] Firewall Manager"
-        box_two_col "[2] System Monitor"        "[6] Create User"
-        box_two_col "[3] VPS Speed Test"         "[7] Create Trial Account"
-        box_two_col "[4] Service Manager"         "[8] Delete User"
+        box_two_col "[1] SSH/WS Menu"        "[7]  ZIVPN Menu"
+        box_two_col "[2] SSH UDP Menu"        "[8]  Service Manager"
+        box_two_col "[3] VMESS Menu"           "[9]  Firewall Manager"
+        box_two_col "[4] VLESS Menu"            "[10] Delete User"
+        box_two_col "[5] TROJAN Menu"            "[11] List Users"
+        box_two_col "[6] SOCKS Menu"              ""
         box_bottom
         echo
 
         box_top
         box_line "${WHITE}TOOLS${RESET}" center
         box_divider
-        box_two_col "[9]  List Users"            "[14] Check for Updates"
-        box_two_col "[10] Backup VPS"              "[15] About"
-        box_two_col "[11] Restore VPS"               "[16] Uninstall Script"
-        box_two_col "[12] Restart All Services"        "[17] Activate License"
-        box_two_col "[13] Enable BBR"                    ""
+        box_two_col "[12] System Information" "[18] Enable BBR"
+        box_two_col "[13] System Monitor"       "[19] Check for Updates"
+        box_two_col "[14] VPS Speed Test"         "[20] About"
+        box_two_col "[15] Backup VPS"               "[21] Uninstall Script"
+        box_two_col "[16] Restore VPS"                "[22] Activate License"
+        box_two_col "[17] Restart All Services"         "[88] Reboot VPS"
+        box_bottom
+        echo
+
+        box_top
+        box_line "VERSION   : ${SCRIPT_VERSION}"
+        box_line "SCRIPT BY : ${AUTHOR}"
+        box_line "REPO      : $(echo "https://github.com/${GITHUB_REPO}" | cut -c1-58)"
         box_bottom
         echo
 
@@ -230,23 +240,29 @@ main_menu() {
         read -rp "Select menu : " choice
 
         case $choice in
-            1) system_info ;;
-            2) system_monitor ;;
-            3) vps_speedtest ;;
-            4) service_manager_hub ;;
-            5) firewall_manager ;;
-            6) create_user ;;
-            7) create_trial_user ;;
-            8) delete_user ;;
-            9) list_users ;;
-            10) backup_vps ;;
-            11) restore_vps ;;
-            12) restart_all_services ;;
-            13) enable_bbr ;;
-            14) check_for_updates ;;
-            15) show_about ;;
-            16) uninstall_script ;;
-            17) activate_license ;;
+            1) ssh_ws_menu ;;
+            2) sshudp_menu ;;
+            3) create_account_vmess ;;
+            4) create_account_vless ;;
+            5) create_account_trojan ;;
+            6) create_account_socks ;;
+            7) zivpn_menu ;;
+            8) service_manager_hub ;;
+            9) firewall_manager ;;
+            10) delete_user ;;
+            11) list_users ;;
+            12) system_info ;;
+            13) system_monitor ;;
+            14) vps_speedtest ;;
+            15) backup_vps ;;
+            16) restore_vps ;;
+            17) restart_all_services ;;
+            18) enable_bbr ;;
+            19) check_for_updates ;;
+            20) show_about ;;
+            21) uninstall_script ;;
+            22) activate_license ;;
+            88) reboot_vps ;;
             99) generate_license_key ;;
             0)
                 echo -e "${GREEN}Goodbye!${RESET}"
