@@ -202,6 +202,30 @@ generate_license_key() {
     line
 }
 
+# Short one-line trial/license status, meant to be displayed inside
+# the dashboard footer rather than printed separately before it.
+bistech_status_line() {
+    if _bistech_has_valid_license; then
+        echo "Licensed"
+        return
+    fi
+
+    local start_ts now_ts seconds_used trial_total_seconds seconds_left
+    start_ts=$(cat "$TRIAL_MARKER_FILE" 2>/dev/null)
+    now_ts=$(date +%s)
+    [ -z "$start_ts" ] && start_ts=$now_ts
+
+    trial_total_seconds=$(_bistech_trial_seconds)
+    seconds_used=$(( now_ts - start_ts ))
+    seconds_left=$(( trial_total_seconds - seconds_used ))
+
+    if [ "$seconds_left" -gt 0 ]; then
+        echo "Trial: $(_bistech_human_duration "$seconds_left") remaining"
+    else
+        echo "Trial expired"
+    fi
+}
+
 # Gate function called once at menu startup.
 # Returns 0 to allow the menu to continue, 1 to block it.
 check_trial_or_license() {
@@ -225,8 +249,9 @@ check_trial_or_license() {
     seconds_left=$(( trial_total_seconds - seconds_used ))
 
     if [ "$seconds_left" -gt 0 ]; then
-        warning "Trial mode: $(_bistech_human_duration "$seconds_left") remaining. Choose [Activate License] anytime from the menu."
-        line
+        # Still within trial - say nothing here. The remaining time is
+        # shown inside the dashboard footer instead of as loose text
+        # that would just flash before the dashboard clears the screen.
         return 0
     fi
 

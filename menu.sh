@@ -28,68 +28,6 @@ fi
 # ---------- Trial / License gate ----------
 check_trial_or_license
 
-# =========================================================
-# Generic systemd service manager (used for SSH / SSH UDP /
-# ZIVPN / Xray sub-menus). Each of these tools is expected to
-# run as its own systemd service; this gives a consistent way
-# to install-check, start, stop, restart, and view status/logs
-# for whichever service name is passed in.
-# =========================================================
-generic_service_manager() {
-    local display_name="$1"
-    local service_name="$2"
-    local install_function="$3"  # optional: name of a function that installs this service
-
-    while true; do
-        banner
-        echo -e "${WHITE} ${display_name}${RESET}"
-        line
-
-        local is_installed=0
-        if systemctl list-unit-files 2>/dev/null | grep -q "^${service_name}\.service"; then
-            is_installed=1
-            local state
-            state=$(systemctl is-active "$service_name" 2>/dev/null)
-            echo -e "${CYAN}Service status:${RESET} $state"
-        else
-            warning "Service '$service_name' is not installed on this system."
-        fi
-        line
-
-        if [ "$is_installed" -eq 0 ] && [ -n "$install_function" ]; then
-            echo " [1] Install Service"
-        else
-            echo " [1] Start Service"
-        fi
-        echo " [2] Stop Service"
-        echo " [3] Restart Service"
-        echo " [4] Show Status"
-        echo " [5] Show Recent Logs"
-        echo " [0] Back to Main Menu"
-        line
-        read -rp "Select an option: " svc_choice
-
-        case $svc_choice in
-            1)
-                if [ "$is_installed" -eq 0 ] && [ -n "$install_function" ]; then
-                    "$install_function"
-                elif [ "$is_installed" -eq 0 ]; then
-                    error "No installer configured for '$service_name'. Install it manually, then manage it here."
-                else
-                    systemctl start "$service_name" 2>/dev/null && success "Started $service_name" || error "Failed to start $service_name"
-                fi
-                ;;
-            2) systemctl stop "$service_name" 2>/dev/null && success "Stopped $service_name" || error "Failed to stop $service_name" ;;
-            3) systemctl restart "$service_name" 2>/dev/null && success "Restarted $service_name" || error "Failed to restart $service_name" ;;
-            4) systemctl status "$service_name" --no-pager 2>/dev/null || warning "No status available." ;;
-            5) journalctl -u "$service_name" -n 30 --no-pager 2>/dev/null || warning "No logs available." ;;
-            0) return 0 ;;
-            *) warning "Invalid option." ;;
-        esac
-        read -rp "Press Enter to continue..." _
-    done
-}
-
 # ---------- Real installer: SSH ----------
 # SSH is present on almost every VPS already (it's how you're connected),
 # but this ensures openssh-server is installed and enabled in case it
@@ -236,6 +174,7 @@ main_menu() {
         box_line "VERSION   : ${SCRIPT_VERSION}"
         box_line "SCRIPT BY : ${AUTHOR}"
         box_line "REPO      : $(echo "https://github.com/${GITHUB_REPO}" | cut -c1-58)"
+        box_line "STATUS    : $(bistech_status_line)"
         box_bottom
         echo
 

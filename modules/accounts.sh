@@ -129,7 +129,7 @@ _accounts_create_xray_account() {
     local username="$2"
 
     if ! systemctl list-unit-files 2>/dev/null | grep -q "^xray\.service"; then
-        error "Xray is not installed. Install it from Service Manager first."
+        error "Xray is not installed. Install it via the SERVICES box (Toggle Xray) first."
         return 1
     fi
 
@@ -191,30 +191,6 @@ _accounts_create_xray_account() {
 
 # ---------- Menu-facing entry points ----------
 
-# SSH/WS is a menu of its own (standard account vs quick trial),
-# matching how the other protocol menus behave.
-ssh_ws_menu() {
-    while true; do
-        banner
-        echo -e "${WHITE} SSH/WS MENU${RESET}"
-        line
-        echo " [1] Create Standard Account"
-        echo " [2] Create Trial Account"
-        echo " [0] Back to Main Menu"
-        line
-        read -rp "Select an option: " ssh_choice
-        case $ssh_choice in
-            1) create_account_ssh_standard ;;
-            2) create_account_ssh_trial ;;
-            0) return 0 ;;
-            *) warning "Invalid option." ;;
-        esac
-        if [ "$ssh_choice" != "0" ]; then
-            read -rp "Press Enter to continue..." _
-        fi
-    done
-}
-
 create_account_ssh_standard() {
     banner
     echo -e "${WHITE} CREATE SSH/WS ACCOUNT${RESET}"
@@ -255,35 +231,13 @@ create_account_ssh_trial() {
 # SSH UDP: same Linux login mechanism as SSH/WS, but the account
 # details shown highlight the UDP tunnel port too (SSHUDP_PORT in
 # config.conf) since that's the extra piece client apps need.
-sshudp_menu() {
-    while true; do
-        banner
-        echo -e "${WHITE} SSH UDP MENU${RESET}"
-        line
-        echo " [1] Create Standard Account"
-        echo " [2] Create Trial Account"
-        echo " [0] Back to Main Menu"
-        line
-        read -rp "Select an option: " udp_choice
-        case $udp_choice in
-            1) create_account_sshudp_standard ;;
-            2) create_account_sshudp_trial ;;
-            0) return 0 ;;
-            *) warning "Invalid option." ;;
-        esac
-        if [ "$udp_choice" != "0" ]; then
-            read -rp "Press Enter to continue..." _
-        fi
-    done
-}
-
 create_account_sshudp_standard() {
     banner
     echo -e "${WHITE} CREATE SSH UDP ACCOUNT${RESET}"
     line
 
     if ! systemctl list-unit-files 2>/dev/null | grep -q "^sshudp\.service"; then
-        warning "SSH UDP service isn't installed yet - install it from Service Manager first."
+        warning "SSH UDP service isn't installed yet - install it via the SERVICES box (Toggle SSH UDP) first."
         echo "The Linux account below will still be created and works over plain SSH;"
         echo "it just won't tunnel over UDP until the service is installed."
         echo
@@ -307,7 +261,7 @@ create_account_sshudp_trial() {
     line
 
     if ! systemctl list-unit-files 2>/dev/null | grep -q "^sshudp\.service"; then
-        warning "SSH UDP service isn't installed yet - install it from Service Manager first."
+        warning "SSH UDP service isn't installed yet - install it via the SERVICES box (Toggle SSH UDP) first."
         echo "The Linux account below will still be created and works over plain SSH;"
         echo "it just won't tunnel over UDP until the service is installed."
         echo
@@ -393,28 +347,6 @@ _accounts_zivpn_not_wired_notice() {
     echo "to ZIVPN's config manually for now, or tell me which ZIVPN build"
     echo "you're using and I can wire this up for real."
     echo
-}
-
-zivpn_menu() {
-    while true; do
-        banner
-        echo -e "${WHITE} ZIVPN MENU${RESET}"
-        line
-        echo " [1] Create Standard Account"
-        echo " [2] Create Trial Account"
-        echo " [0] Back to Main Menu"
-        line
-        read -rp "Select an option: " zi_choice
-        case $zi_choice in
-            1) create_account_zivpn_standard ;;
-            2) create_account_zivpn_trial ;;
-            0) return 0 ;;
-            *) warning "Invalid option." ;;
-        esac
-        if [ "$zi_choice" != "0" ]; then
-            read -rp "Press Enter to continue..." _
-        fi
-    done
 }
 
 create_account_zivpn_standard() {
