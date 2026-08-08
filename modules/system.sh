@@ -163,3 +163,32 @@ reboot_vps() {
     info "Rebooting..."
     reboot
 }
+
+# Clean up system logs to free disk space - vacuums journald logs
+# older than 3 days and truncates (not deletes) common log files.
+clean_vps_logs() {
+    banner
+    echo -e "${WHITE} CLEAN VPS LOGS${RESET}"
+    line
+
+    local before_size after_size
+    before_size=$(du -sh /var/log 2>/dev/null | cut -f1)
+
+    warning "This truncates system logs older than 3 days to free disk space."
+    read -rp "Continue? (y/N): " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        warning "Cancelled."
+        return 0
+    fi
+
+    info "Vacuuming journald logs..."
+    journalctl --vacuum-time=3d >/dev/null 2>&1
+
+    info "Truncating old rotated log files..."
+    find /var/log -type f -name "*.log.*" -mtime +3 -exec truncate -s 0 {} \; 2>/dev/null
+    find /var/log -type f -name "*.gz" -mtime +3 -delete 2>/dev/null
+
+    after_size=$(du -sh /var/log 2>/dev/null | cut -f1)
+    success "Logs cleaned. /var/log size: $before_size -> $after_size"
+    line
+}

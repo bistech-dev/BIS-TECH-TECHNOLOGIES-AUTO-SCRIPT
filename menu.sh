@@ -159,46 +159,34 @@ install_zivpn_service() {
     _install_from_configured_url "ZIVPN" "$ZIVPN_INSTALL_URL"
 }
 
-# =========================================================
-# Unified Service Manager hub - one screen for all four
-# protocol services (SSH, SSH UDP, ZIVPN, Xray) instead of
-# four separate top-level menu entries. Pick a service, act on
-# it, and land back on this same hub - no more jumping between
-# differently-labeled menus for each protocol.
-# =========================================================
-service_manager_hub() {
-    while true; do
-        banner
-        echo -e "${WHITE} SERVICE MANAGER${RESET}"
-        line
+# ---------- One-click service toggle (no sub-menu) ----------
+# Not installed -> installs it. Installed + stopped -> starts it.
+# Installed + running -> stops it. This collapses install/start/stop
+# into a single direct action so service control fits on the main
+# menu screen instead of needing its own menu layer.
+service_toggle() {
+    local service_name="$1"
+    local install_function="$2"
 
-        local ssh_state sshudp_state zivpn_state xray_state
-        ssh_state=$(systemctl is-active ssh 2>/dev/null || echo "not installed")
-        sshudp_state=$(systemctl is-active sshudp 2>/dev/null || echo "not installed")
-        zivpn_state=$(systemctl is-active zivpn 2>/dev/null || echo "not installed")
-        xray_state=$(systemctl is-active xray 2>/dev/null || echo "not installed")
+    if ! systemctl list-unit-files 2>/dev/null | grep -q "^${service_name}\.service"; then
+        if [ -n "$install_function" ]; then
+            "$install_function"
+        else
+            error "No installer configured for '$service_name'."
+        fi
+        return
+    fi
 
-        echo -e " ${CYAN}[1]${RESET} SSH        - $ssh_state"
-        echo -e " ${CYAN}[2]${RESET} SSH UDP    - $sshudp_state"
-        echo -e " ${CYAN}[3]${RESET} ZIVPN      - $zivpn_state"
-        echo -e " ${CYAN}[4]${RESET} Xray       - $xray_state"
-        echo " [0] Back to Main Menu"
-        line
-        read -rp "Select a service to manage: " svc_pick
-
-        case $svc_pick in
-            1) generic_service_manager "SSH MANAGER" "ssh" "install_ssh_service" ;;
-            2) generic_service_manager "SSH UDP SERVICE MANAGER" "sshudp" "install_sshudp_service" ;;
-            3) generic_service_manager "ZIVPN SERVICE MANAGER" "zivpn" "install_zivpn_service" ;;
-            4) generic_service_manager "XRAY MANAGER" "xray" "install_xray_service" ;;
-            0) return 0 ;;
-            *) warning "Invalid option." ; read -rp "Press Enter to continue..." _ ;;
-        esac
-    done
+    if systemctl is-active --quiet "$service_name" 2>/dev/null; then
+        systemctl stop "$service_name" 2>/dev/null && success "Stopped $service_name" || error "Failed to stop $service_name"
+    else
+        systemctl start "$service_name" 2>/dev/null && success "Started $service_name" || error "Failed to start $service_name"
+    fi
 }
 
 # =========================================================
-# Main Menu Loop
+# Main Menu Loop - everything on one screen, organized into
+# boxes (MENU, SERVICES, TOOLS, footer). No sub-menu screens.
 # =========================================================
 main_menu() {
     while true; do
@@ -207,24 +195,40 @@ main_menu() {
         box_top
         box_line "${WHITE}MENU${RESET}" center
         box_divider
-        box_two_col "[1] SSH/WS Menu"        "[7]  ZIVPN Menu"
-        box_two_col "[2] SSH UDP Menu"        "[8]  Service Manager"
-        box_two_col "[3] VMESS Menu"           "[9]  Firewall Manager"
-        box_two_col "[4] VLESS Menu"            "[10] Delete User"
-        box_two_col "[5] TROJAN Menu"            "[11] List Users"
-        box_two_col "[6] SOCKS Menu"              ""
+        box_two_col "[1]  SSH/WS - Create Account"    "[6]  VLESS - Create Account"
+        box_two_col "[2]  SSH/WS - Create Trial"        "[7]  TROJAN - Create Account"
+        box_two_col "[3]  SSH UDP - Create Account"      "[8]  SOCKS - Create Account"
+        box_two_col "[4]  SSH UDP - Create Trial"         "[9]  ZIVPN - Create Account"
+        box_two_col "[5]  VMESS - Create Account"          "[10] ZIVPN - Create Trial"
+        box_bottom
+        echo
+
+        box_top
+        box_line "${WHITE}SERVICES${RESET}  (tap to install / start / stop)" center
+        box_divider
+        box_two_col "[11] Toggle SSH"        "[13] Toggle ZIVPN"
+        box_two_col "[12] Toggle SSH UDP"     "[14] Toggle Xray"
         box_bottom
         echo
 
         box_top
         box_line "${WHITE}TOOLS${RESET}" center
         box_divider
-        box_two_col "[12] System Information" "[18] Enable BBR"
-        box_two_col "[13] System Monitor"       "[19] Check for Updates"
-        box_two_col "[14] VPS Speed Test"         "[20] About"
-        box_two_col "[15] Backup VPS"               "[21] Uninstall Script"
-        box_two_col "[16] Restore VPS"                "[22] Activate License"
-        box_two_col "[17] Restart All Services"         "[88] Reboot VPS"
+        box_two_col "[15] System Information" "[21] Enable BBR"
+        box_two_col "[16] System Monitor"       "[22] Check for Updates"
+        box_two_col "[17] VPS Speed Test"         "[23] About"
+        box_two_col "[18] Firewall Manager"         "[24] Uninstall Script"
+        box_two_col "[19] Delete User"                "[25] Activate License"
+        box_two_col "[20] List Users"                   ""
+        box_bottom
+        echo
+
+        box_top
+        box_line "${WHITE}MAINTENANCE${RESET}" center
+        box_divider
+        box_two_col "[26] Backup VPS"          "[29] Restart All Services"
+        box_two_col "[27] Restore VPS"           "[88] Reboot VPS"
+        box_two_col "[28] Clean Logs"              ""
         box_bottom
         echo
 
@@ -240,28 +244,35 @@ main_menu() {
         read -rp "Select menu : " choice
 
         case $choice in
-            1) ssh_ws_menu ;;
-            2) sshudp_menu ;;
-            3) create_account_vmess ;;
-            4) create_account_vless ;;
-            5) create_account_trojan ;;
-            6) create_account_socks ;;
-            7) zivpn_menu ;;
-            8) service_manager_hub ;;
-            9) firewall_manager ;;
-            10) delete_user ;;
-            11) list_users ;;
-            12) system_info ;;
-            13) system_monitor ;;
-            14) vps_speedtest ;;
-            15) backup_vps ;;
-            16) restore_vps ;;
-            17) restart_all_services ;;
-            18) enable_bbr ;;
-            19) check_for_updates ;;
-            20) show_about ;;
-            21) uninstall_script ;;
-            22) activate_license ;;
+            1) create_account_ssh_standard ;;
+            2) create_account_ssh_trial ;;
+            3) create_account_sshudp_standard ;;
+            4) create_account_sshudp_trial ;;
+            5) create_account_vmess ;;
+            6) create_account_vless ;;
+            7) create_account_trojan ;;
+            8) create_account_socks ;;
+            9) create_account_zivpn_standard ;;
+            10) create_account_zivpn_trial ;;
+            11) service_toggle "ssh" "install_ssh_service" ;;
+            12) service_toggle "sshudp" "install_sshudp_service" ;;
+            13) service_toggle "zivpn" "install_zivpn_service" ;;
+            14) service_toggle "xray" "install_xray_service" ;;
+            15) system_info ;;
+            16) system_monitor ;;
+            17) vps_speedtest ;;
+            18) firewall_manager ;;
+            19) delete_user ;;
+            20) list_users ;;
+            21) enable_bbr ;;
+            22) check_for_updates ;;
+            23) show_about ;;
+            24) uninstall_script ;;
+            25) activate_license ;;
+            26) backup_vps ;;
+            27) restore_vps ;;
+            28) clean_vps_logs ;;
+            29) restart_all_services ;;
             88) reboot_vps ;;
             99) generate_license_key ;;
             0)
